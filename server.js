@@ -1,8 +1,15 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const app = express()
+const bcrypt = require('bcrypt')
+const cors = require('cors')
 
-app.use(bodyParser.json())
+
+
+
+
+const app = express()
+const PORT = process.env.PORT || 3001 
+app.use(cors())
 
 const database = {
     users : [
@@ -17,25 +24,30 @@ const database = {
         {
             id : '124',
             name : 'Elena',
-            email: 'Elena@gmail.com',
-            password : '123987',
+            email: 'elena@gmail.com',
+            password : 'banana',
             entries : 0,
-            joined : new Date()}
-    ]
-}
-
-
+            joined :  new Date()
+        }
+        ]
+    }
+    
+app.use(bodyParser.json())
 app.get('/' , (req , res) => {
- res.send('This is working') 
+ res.send(database.users) 
 })
-app.post('/signing' , (req , res) => {
+
+
+app.post('/signin' , (req , res) => {
     if(req.body.email === database.users[0].email &&
        req.body.password === database.users[0].password){
-           res.json('succes')
+           res.json('success')
         }else{
-            res.status(400).json('You blew it! ')
+            res.status(400).json('You blew it!')
         }
 })
+
+
 app.post('/register' , (req , res ) =>{
    const { email , name , password } = req.body 
    database.users.push({
@@ -53,9 +65,9 @@ app.get('/profile/:id' , ( req , res ) =>{
       database.users.forEach( user =>{
         if ( user.id === id){
             found;
-            return res.json(user)
+            return res.json('success')
         }
-    })
+    }) 
     if(!found){
         res.status(400).json(' No User found')
     } 
@@ -77,6 +89,6 @@ app.put('/image' , (req , res) =>{
 })
 
 
-app.listen(3000 , ()=>{
-    console.log('App running on port 3000 ')
+app.listen(PORT , ()=>{
+    console.log('App running on port' , PORT)
 })
