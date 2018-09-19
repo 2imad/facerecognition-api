@@ -16,7 +16,7 @@ const database = {
         {
             id : '123',
             name : 'David',
-            email: 'david@gmail.com',
+            email: 'elena',
             password : '123456',
             entries : 0,
             joined : new Date()
@@ -39,12 +39,16 @@ app.get('/' , (req , res) => {
 
 
 app.post('/signin' , (req , res) => {
-    if(req.body.email === database.users[0].email &&
-       req.body.password === database.users[0].password){
-           res.json('success')
-        }else{
-            res.status(400).json('You blew it!')
-        }
+    database.users.forEach( user => {
+
+        if(req.body.email === user.email &&
+           req.body.password === user.password){
+               res.json('success')
+            }
+            // else{
+            //     res.status(400).json('You blew it!')
+            // }
+    })
 })
 
 
