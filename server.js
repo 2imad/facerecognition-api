@@ -16,7 +16,7 @@ const database = {
         {
             id : '123',
             name : 'David',
-            email: 'elena',
+            email: 'david',
             password : '123456',
             entries : 0,
             joined : new Date()
@@ -43,7 +43,7 @@ app.post('/signin' , (req , res) => {
 
         if(req.body.email === user.email &&
            req.body.password === user.password){
-               res.json('success')
+               res.json(user)
             }
             // else{
             //     res.status(400).json('You blew it!')
@@ -55,14 +55,16 @@ app.post('/signin' , (req , res) => {
 app.post('/register' , (req , res ) =>{
    const { email , name , password } = req.body 
    database.users.push({
-       id : '123',
+       id : '125',
        name : name,
        email : email,
-       password : password,
+       entries : 0,
        joined : new Date()
    })
    res.json(database.users[database.users.length - 1])
 })
+
+
 app.get('/profile/:id' , ( req , res ) =>{
     const { id } =  req.params
     let found = false;
@@ -84,7 +86,7 @@ app.put('/image' , (req , res) =>{
      if ( user.id  === id ){
         found
         user.entries ++ 
-        res.json(user.entries) 
+        return  res.json(user.entries) 
      }
    })
    if(!found){
