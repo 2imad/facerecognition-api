@@ -2,12 +2,25 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const bcrypt = require('bcrypt')
 const cors = require('cors')
-
-
-
-
+const knex = require('knex')
 
 const app = express()
+
+const db =  knex({
+    client : 'pg',
+    connection :{
+        host :'127.0.0.1',
+        user : 'user',
+        password :'',
+        database :'smart-brain'
+    }
+})
+
+
+
+
+
+
 const PORT = process.env.PORT || 3001 
 app.use(cors())
 
@@ -32,6 +45,8 @@ const database = {
         ]
     }
     
+
+
 app.use(bodyParser.json())
 app.get('/' , (req , res) => {
  res.send(database.users) 
@@ -54,15 +69,20 @@ app.post('/signin' , (req , res) => {
 
 app.post('/register' , (req , res ) =>{
    const { email , name , password } = req.body 
-   database.users.push({
-       id : '125',
-       name : name,
+   db('users')
+   .returning('*')
+   .insert({
        email : email,
-       entries : 0,
-       joined : new Date()
+       name : name ,
+       joined : new Date(),
+
    })
-   res.json(database.users[database.users.length - 1])
+   .then(user => {
+       res.json(user[0])
+    })
+    .catch(err =>  res.json(err)) 
 })
+
 
 
 app.get('/profile/:id' , ( req , res ) =>{
