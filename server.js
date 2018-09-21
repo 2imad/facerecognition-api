@@ -1,120 +1,108 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt-nodejs')
 const cors = require('cors')
 const knex = require('knex')
 
 const app = express()
 
-const db =  knex({
-    client : 'pg',
-    connection :{
-        host :'127.0.0.1',
-        user : 'user',
-        password :'',
-        database :'smart-brain'
+const db = knex({
+    client: 'pg',
+    connection: {
+        host: '127.0.0.1',
+        user: 'postgres',
+        password: 'user',
+        database: 'smart-brain'
     }
 })
 
 
-
-
-
-
-const PORT = process.env.PORT || 3001 
+const PORT = process.env.PORT || 3001
 app.use(cors())
 
-const database = {
-    users : [
-        {
-            id : '123',
-            name : 'David',
-            email: 'david',
-            password : '123456',
-            entries : 0,
-            joined : new Date()
-        },
-        {
-            id : '124',
-            name : 'Elena',
-            email: 'elena@gmail.com',
-            password : 'banana',
-            entries : 0,
-            joined :  new Date()
-        }
-        ]
-    }
-    
-
-
 app.use(bodyParser.json())
-app.get('/' , (req , res) => {
- res.send(database.users) 
+app.get('/', (req, res) => {
+    res.send(database.users)
 })
 
 
-app.post('/signin' , (req , res) => {
-    database.users.forEach( user => {
-
-        if(req.body.email === user.email &&
-           req.body.password === user.password){
-               res.json(user)
+app.post('/signin', (req, res) => {
+    db.select('email', 'hash').from('login')
+        .where('email', '=', req.body.email)
+        .then(data => {
+            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
+            if (isValid) {
+                return db.select('*').from('users')
+                    .where('email', '=', req.body.email)
+                    .then(user => {
+                        res.json(user[0])
+                    })
+                    .catch(err => res.status(404).json('Unable to get user'))
+            } else {
+                res.json('Wrong credentials')
             }
-            // else{
-            //     res.status(400).json('You blew it!')
-            // }
-    })
+        })
+        .catch(err => res.status(400).json('Unable to connect user'))
 })
 
 
-app.post('/register' , (req , res ) =>{
-   const { email , name , password } = req.body 
-   db('users')
-   .returning('*')
-   .insert({
-       email : email,
-       name : name ,
-       joined : new Date(),
+app.post('/register', (req, res) => {
+    const { email, name, password } = req.body
+    const hash = bcrypt.hashSync(password)
+    db.transaction(trx => {
+        trx.insert({
+            email: email,
+            hash: hash
+        })
+            .into('login')
+            .returning('email')
+            .then(loginEmail => {
+                return trx('users')
+                    .returning('*')
+                    .insert({
+                        email: loginEmail[0],
+                        name: name,
+                        joined: new Date(),
 
-   })
-   .then(user => {
-       res.json(user[0])
+                    })
+                    .then(user => {
+                        res.json(user[0])
+                    })
+            })
+            .then(trx.commit)
+            .catch(trx.rollback)
     })
-    .catch(err =>  res.json(err)) 
+        .catch(err => res.json('Cannot register user '))
 })
 
 
 
-app.get('/profile/:id' , ( req , res ) =>{
-    const { id } =  req.params
-    let found = false;
-      database.users.forEach( user =>{
-        if ( user.id === id){
-            found;
-            return res.json('success')
+app.get('/profile/:id', (req, res) => {
+    const { id } = req.params
+    db.select('*').from('users').where({ id }).then(user => {
+
+        if (user.length) {
+            res.json(user[0])
+        } else {
+            res.status(404).json('User Not found')
         }
-    }) 
-    if(!found){
-        res.status(400).json(' No User found')
-    } 
-})
-
-app.put('/image' , (req , res) =>{
-   const { id } = req.body
-   let found = false
-   database.users.forEach( user => {
-     if ( user.id  === id ){
-        found
-        user.entries ++ 
-        return  res.json(user.entries) 
-     }
-   })
-   if(!found){
-       res.status(400).res.json('No user and there is not such a thing as entries')
-   }
+    }).catch(err => {
+        res.json('Error loading Profile ')
+    })
 })
 
 
-app.listen(PORT , ()=>{
-    console.log('App running on port' , PORT)
+app.put('/image', (req, res) => {
+    const { id } = req.body
+    db('users').where('id', '=', id)
+        .increment('entries', 1)
+        .returning('entries')
+        .then(entries =>
+            res.json(entries[0])
+        ).catch(err => res.json(' Error updating the entries'))
+})
+
+
+app.listen(PORT, () => {
+    console.log('App running on port', PORT)
 })
