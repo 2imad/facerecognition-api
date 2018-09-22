@@ -1,15 +1,14 @@
 {
   "name": "facerecognition-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "Face recognition Api",
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Imad ",
+  "license": "MIT",
   "dependencies": {
-    "bcrypt": "^3.0.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",

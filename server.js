@@ -5,6 +5,8 @@ const cors = require('cors')
 const knex = require('knex')
 
 const app = express()
+app.use(cors())
+app.use(bodyParser.json())
 
 const register = require('./controllers/register')
 const login = require('./controllers/login')
@@ -19,9 +21,7 @@ const db = knex({
     database: 'smart-brain'
     }
 })
-app.use(cors())
-app.use(bodyParser.json())
-app.get('/', (req, res) => res.send(database.users))
+app.get('/', (req, res) => res.send('App Working'))
 app.post('/signin', (req , res ) => {login.onLogin(req, res, db, bcrypt)})
 app.post('/register', (req,res) => {register.onRegister(req, res, db, bcrypt)})
 app.get('/profile/:id', (req, res)=> {profile.onProfileRequest(req , res, db) })
